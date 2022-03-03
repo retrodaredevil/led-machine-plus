@@ -10,3 +10,4 @@
 rootProject.name = 'led-machine-plus'
 
 include 'app'
+include 'core'
