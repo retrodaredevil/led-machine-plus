@@ -9,6 +9,7 @@ import me.retrodaredevil.led.config.BaseConfig
 import me.retrodaredevil.led.message.MessageQueue
 import me.retrodaredevil.led.percent.BouncePercentGetter
 import me.retrodaredevil.led.percent.TimeMultiplierPercentGetter
+import me.retrodaredevil.util.getLogger
 import kotlin.jvm.Throws
 import kotlin.math.max
 import kotlin.math.min
@@ -21,8 +22,10 @@ object LedConstants {
 }
 
 class LedState(
-        private val totalPixelCount: Int,
-        private val virtualPixelCount: Int,
+        val totalPixelCount: Int,
+        val virtualPixelCount: Int,
+        val startPixelSkipCount: Int,
+        val endPixelSkipCount: Int,
 ) {
     private val colorPercentGetter = LedConstants.defaultPercentGetter
     private val solidColorPercentGetter = ReversingPercentGetter(10.0, 15.0 * 60, 10.0)
@@ -30,7 +33,7 @@ class LedState(
     var colorTimeMultiplier = 1.0
     var patternTimeMultiplier = 1.0
 
-    var mainAlter: Alter = TODO()
+    var mainAlter: Alter = AlterNothing
     var patternAlter: Alter = AlterNothing
 
     fun reset() {
@@ -105,18 +108,35 @@ class LedProgram(
     private val messageQueue: MessageQueue = baseConfig.messageConfig.toMessageQueueCreator().createMessageQueue()
     private val virtualPixelCount = baseConfig.ledCount - (baseConfig.startPixelSkipCount + baseConfig.endPixelSkipCount)
 
+    private val ledState = LedState(baseConfig.ledCount, virtualPixelCount, baseConfig.startPixelSkipCount, baseConfig.endPixelSkipCount)
 
-
+    init {
+        handleMessage("rainbow", ledState, MessageContext())
+    }
 
     fun update(seconds: Double) {
-
+        for (message in messageQueue.popNewMessages()) {
+            val context = MessageContext()
+            LOGGER.debug("Got message: ${message.text}")
+            handleMessage(message.text, ledState, context)
+            LOGGER.debug("alter is now: ${getAlter()}")
+        }
     }
     fun getAlter(): Alter {
-        TODO()
+        return AlterMultiplexer(listOf(
+                ledState.mainAlter,
+                ledState.patternAlter,
+                // TODO do something with endPixelSkipCount
+//                AlterBlock(listOf(AlterBlock.Block(Color.BLACK, ledState.startPixelSkipCount.toDouble()), AlterBlock.Block(null, virtualPixelCount.toDouble())), PercentGetter { 0.0 }, fadeWidth = 0.0)
+        ))
     }
 
     @Throws(Exception::class)
     override fun close() {
         messageQueue.close()
+    }
+
+    companion object {
+        private val LOGGER = getLogger()
     }
 }

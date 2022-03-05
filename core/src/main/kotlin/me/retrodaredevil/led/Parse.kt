@@ -3,9 +3,7 @@ package me.retrodaredevil.led
 import me.retrodaredevil.led.alter.*
 import me.retrodaredevil.led.percent.ReversingPercentGetter
 import me.retrodaredevil.led.percent.TimeMultiplierPercentGetter
-import me.retrodaredevil.token.StaticToken
-import me.retrodaredevil.token.StringToken
-import me.retrodaredevil.token.Token
+import me.retrodaredevil.token.*
 import me.retrodaredevil.util.getLogger
 
 val PARTITION_TOKEN = StaticToken("partition", "|")
@@ -237,6 +235,7 @@ object Parse {
             creatorSettings: CreatorSettings,
             useProvidedTimeMultiplier: Boolean = false
     ): AlterCreator? {
+        var creatorSettings: CreatorSettings = creatorSettings
         val blendedTokenList = splitTokens(tokens, BLEND_TOKEN)
         if (blendedTokenList.size <= 1) {
             require(blendedTokenList.isNotEmpty())
@@ -244,15 +243,96 @@ object Parse {
             if (partitionTokenList.size <= 1) {
                 require(partitionTokenList.isNotEmpty())
                 val innerTokens = partitionTokenList[0]
-                val directlyNestedTimeMultiplier: Double? = null
+                var directlyNestedTimeMultiplier: Double? = null
                 for (token in innerTokens) {
                     if (token is StringToken) {
-                        // TODO continue this tomorrow
+                        val timeMultiplier = textToSpeedMultiplier(token.data)
+                        if (timeMultiplier != null) {
+                            directlyNestedTimeMultiplier = timeMultiplier
+                        }
+                        val offsetString = getStringAfter(token.data, "offset")
+                        if (offsetString != null) {
+                            val newOffset = creatorSettings.getOffset(offsetString)
+                            if (newOffset != null) {
+                                creatorSettings = creatorSettings.copy(currentPartitionOffset = newOffset)
+                            }
+                        }
                     }
                 }
+                val timeMultiplierGetter: () -> Double = if (!useProvidedTimeMultiplier && directlyNestedTimeMultiplier != null) { { directlyNestedTimeMultiplier } } else creatorSettings.timeMultiplierGetter
+                val creatorsToCombine = mutableListOf<AlterCreator>()
+                for (token in tokens) {
+                    when (token) {
+                        is StringToken -> {
+                            val colorAlter = textToColorAlter(token.data, timeMultiplierGetter)
+                            val patternAlter = textToPatternAlter(token.data, timeMultiplierGetter)
+                            if (colorAlter != null) {
+                                creatorsToCombine.add(StaticCreator(CreatorData(hasColor = true, hasPattern = false), colorAlter))
+                            }
+                            if (patternAlter != null) {
+                                creatorsToCombine.add(StaticCreator(CreatorData(hasColor = false, hasPattern = true), patternAlter))
+                            }
+                        }
+                        is OrganizerToken -> {
+                            val creator = tokensToCreator(token.tokens, textToColorAlter, textToPatternAlter, textToSpeedMultiplier, creatorSettings)
+                            if (creator != null) {
+                                creatorsToCombine.add(creator)
+                            }
+                        }
+                        is StaticToken -> {
+                            LOGGER.info("Unknown static token: $token")
+                        }
+                        is NothingToken -> { }
+                        else -> {
+                            LOGGER.warn("Unknown token: $token")
+                        }
+                    }
+                }
+                val colorCreators = mutableListOf<AlterCreator>()
+                val patternCreators = mutableListOf<AlterCreator>()
+                for (creator in creatorsToCombine) {
+                    if (creator.creatorData.hasColor) {
+                        colorCreators.add(creator)
+                    } else {
+                        patternCreators.add(creator)
+                    }
+                }
+                return CombinerCreator(colorCreators, patternCreators, directlyNestedTimeMultiplier)
+            } else {
+                // We need to partition
+                val creatorsToPartition = mutableListOf<AlterCreator>()
+                for (tokenList in partitionTokenList) {
+                    val creator = tokensToCreator(tokenList, textToColorAlter, textToPatternAlter, textToSpeedMultiplier, creatorSettings.copy(currentPartitionOffset = 0))
+                    creatorsToPartition.add(creator ?: NOTHING_CREATOR)
+                }
+                return PartitionAlterCreator(creatorsToPartition, creatorSettings.currentPartitionOffset)
             }
+        } else {
+            val creatorsToBlend = mutableListOf<AlterCreator>()
+            for (tokenList in blendedTokenList) {
+                val creator = tokensToCreator(tokenList, textToColorAlter, textToPatternAlter, textToSpeedMultiplier, creatorSettings)
+                creatorsToBlend.add(creator ?: NOTHING_CREATOR)
+            }
+            return BlendAlterCreator(creatorsToBlend, creatorSettings.timeMultiplierGetter)
         }
-        TODO()
     }
 
+    fun getTimeMultiplier(text: String): Double? {
+        val speed = getStringBefore(text, "speed")?.toDoubleOrNull()
+        if (speed != null) {
+            return speed
+        }
+        return when {
+            "hyper" in text -> 4.0
+            "sonic" in text -> 2.0
+            "fast" in text -> 1.5
+            "medium" in text -> 1.0
+            "slow" in text -> 0.5
+            "crawl" in text -> 0.25
+            "limp" in text -> 0.1
+            "still" in text -> 0.001
+            "stop" in text -> 0.000000001
+            else -> null
+        }
+    }
 }
