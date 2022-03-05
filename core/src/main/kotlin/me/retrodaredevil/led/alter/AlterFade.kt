@@ -9,7 +9,7 @@ class AlterFade(
         private val ledSpread: Double,
 ) : Alter {
     override fun alterPixel(seconds: Double, pixelPosition: Position, currentColor: Color?, metadata: LedMetadata): Color? {
-        val percent = 0.0
+        val percent = (percentGetter.getPercent(seconds) + pixelPosition / ledSpread) % 1
         val offset = (percent * alters.size) % alters.size
         val leftIndex = offset.toInt()
         val rightIndex = (leftIndex + 1) % alters.size

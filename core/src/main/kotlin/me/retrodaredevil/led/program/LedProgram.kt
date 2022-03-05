@@ -72,6 +72,8 @@ class LedState(
                         requestedColors.map { AlterSolid(it) },
                         patternSize
                 )
+            } else {
+                return AlterRainbow(TimeMultiplierPercentGetter(percentGetter, timeMultiplierGetter), patternSize)
             }
         } else if (requestedColors.size == 1) {
             return AlterSolid(requestedColors[0])
@@ -81,9 +83,9 @@ class LedState(
     fun parsePatternAlter(text: String, timeMultiplierGetter: () -> Double): Alter? {
         if ("carnival" in text) {
             val blockList = when {
-                "short" in text || "tiny" in text -> listOf(AlterBlock.Block(null, 5.0), AlterBlock.Block(Color.BLACK, 3.0))
-                "long" in text -> listOf(AlterBlock.Block(null, 3.0), AlterBlock.Block(Color.BLACK, 2.0))
-                else -> listOf(AlterBlock.Block(null, 10.0), AlterBlock.Block(Color.BLACK, 6.0))
+                "short" in text || "tiny" in text -> listOf(AlterBlock.Block(null, 3.0), AlterBlock.Block(Color.BLACK, 2.0))
+                "long" in text -> listOf(AlterBlock.Block(null, 10.0), AlterBlock.Block(Color.BLACK, 6.0))
+                else -> listOf(AlterBlock.Block(null, 5.0), AlterBlock.Block(Color.BLACK, 3.0))
             }
             return AlterBlock(blockList, TimeMultiplierPercentGetter(LedConstants.slowDefaultPercentGetter, timeMultiplierGetter))
         } else if ("star" in text) {

@@ -51,7 +51,7 @@ fun main(args: Array<String>) {
             }
             firstUpdate = false
             pixels.render()
-            Thread.sleep(3)
+//            Thread.sleep(3)
         }
     }
 }
