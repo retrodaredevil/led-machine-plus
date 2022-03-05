@@ -1,4 +1,4 @@
-package me.retrodaredevil.led
+package me.retrodaredevil.led.percent
 
 class ReversingPercentGetter(
         val period: Double,

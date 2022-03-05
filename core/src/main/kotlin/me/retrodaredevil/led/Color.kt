@@ -15,6 +15,14 @@ open class RawColor(
         return RawColor(r + other.r, g + other.g, b + other.b)
     }
 
+    fun lerp(other: RawColor, percent: Double): RawColor {
+        return RawColor(
+                r * (1 - percent) + other.r * percent,
+                g * (1 - percent) + other.g * percent,
+                b * (1 - percent) + other.b * percent,
+        )
+    }
+
     override fun toString(): String {
         return "RawColor(r=$r, g=$g, b=$b)"
     }
@@ -56,6 +64,14 @@ class Color(
         return Color(r * scalar, g * scalar, b * scalar)
     }
 
+    fun lerp(other: Color, percent: Double): Color {
+        return Color(
+                r * (1 - percent) + other.r * percent,
+                g * (1 - percent) + other.g * percent,
+                b * (1 - percent) + other.b * percent,
+        )
+    }
+
     override fun toString(): String {
         return "Color(r=$r, g=$g, b=$b)"
     }
@@ -66,4 +82,25 @@ class Color(
         val rawB = (b * 255).roundToInt()
         return (rawR shl 16) or (rawG shl 8) or rawB
     }
+
+    companion object {
+        val BLACK = Color(0.0, 0.0, 0.0)
+        val WHITE = Color(1.0, 1.0, 1.0)
+        val RED = Color(1.0, 0.0, 0.0)
+        val GREEN = Color(0.0, 1.0, 0.0)
+        val BLUE = Color(0.0, 0.0, 1.0)
+        val PURPLE = Color(1.0, 0.0, 1.0)
+
+        fun fromRgb(r: Int, g: Int, b: Int): Color {
+            return Color(r / 255.0, g / 255.0, b / 255.0)
+        }
+
+        fun from24Bit(value: Int): Color {
+            val r = value shr 16
+            val g = (value shr 8) and 0xFF
+            val b = value and 0xFF
+            return fromRgb(r, g, b)
+        }
+    }
 }
+
