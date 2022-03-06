@@ -5,8 +5,8 @@ Description=LED Machine Plus using ##name## config
 TimeoutStartSec=1
 ExecStart=##led_root##/other/scripts/run.sh
 WorkingDirectory=##led_root##/program/configs/##name##
-User=led-machine
-Group=led-machine
+#User=led-machine
+#Group=led-machine
 
 [Install]
 WantedBy=multi-user.target

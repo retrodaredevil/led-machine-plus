@@ -22,6 +22,9 @@ else
   cd led-machine-plus || exit 1
 fi
 
+# TODO move some of this to an install script
+
 other/scripts/create_user.sh || exit 1
 other/scripts/update_perms.sh continue || exit 1
+chmod g+w /dev/mem
 
