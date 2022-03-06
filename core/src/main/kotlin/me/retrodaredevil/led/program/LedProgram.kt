@@ -116,9 +116,10 @@ class LedProgram(
         baseConfig: BaseConfig
 ): AutoCloseable {
     private val messageQueue: MessageQueue = baseConfig.messageConfig.toMessageQueueCreator().createMessageQueue()
-    private val virtualPixelCount = baseConfig.ledCount - (baseConfig.startPixelSkipCount + baseConfig.endPixelSkipCount)
 
-    private val ledState = LedState(baseConfig.ledCount, virtualPixelCount, baseConfig.startPixelSkipCount, baseConfig.endPixelSkipCount)
+    private val ledState = LedState(baseConfig.ledCount, baseConfig.ledCount - (baseConfig.startPixelSkipCount + baseConfig.endPixelSkipCount), baseConfig.startPixelSkipCount, baseConfig.endPixelSkipCount)
+
+    private var alterCache: Alter? = null
 
     init {
         handleMessage("rainbow", ledState, MessageContext())
@@ -129,16 +130,26 @@ class LedProgram(
             val context = MessageContext()
             LOGGER.debug("Got message: ${message.text}")
             handleMessage(message.text.lowercase(), ledState, context)
+            alterCache = null
             LOGGER.debug("alter is now: ${getAlter()}")
         }
     }
     fun getAlter(): Alter {
-        return AlterMultiplexer(listOf(
+        val cache = alterCache
+        if (cache != null) {
+            return cache
+        }
+        val alter = AlterMultiplexer(listOf(
                 ledState.mainAlter,
                 ledState.patternAlter,
-                // TODO do something with endPixelSkipCount
-//                AlterBlock(listOf(AlterBlock.Block(Color.BLACK, ledState.startPixelSkipCount.toDouble()), AlterBlock.Block(null, virtualPixelCount.toDouble())), PercentGetter { 0.0 }, fadeWidth = 0.0)
+                AlterBlock(listOf(
+                        AlterBlock.Block(Color.BLACK, ledState.startPixelSkipCount.toDouble()),
+                        AlterBlock.Block(null, ledState.virtualPixelCount.toDouble()),
+                        AlterBlock.Block(Color.BLACK, ledState.endPixelSkipCount.toDouble()),
+                ), { 0.0 }, fadeWidth = 0.0)
         ))
+        alterCache = alter
+        return alter
     }
 
     @Throws(Exception::class)

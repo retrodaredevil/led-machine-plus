@@ -35,7 +35,12 @@ fun main(args: Array<String>) {
     Signal.handle(Signal("INT")) { sig: Signal ->
         logger.info("Received INT termination signal")
         mainThread.interrupt()
-        mainThread.join()
+        try {
+            @Suppress("BlockingMethodInNonBlockingContext")
+            mainThread.join(500)
+        } catch (ex: InterruptedException) {
+            logger.error("Could not stop the main thread! It will forcibly be stopped.")
+        }
     }
 
     logger.info("Using gpio: ${baseConfig.gpioPort} with led count: ${baseConfig.ledCount}")
