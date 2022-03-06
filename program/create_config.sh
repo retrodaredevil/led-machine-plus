@@ -15,9 +15,9 @@ if [ "$#" -eq 1 ]; then
   cd "$DIRECTORY" || exit 1
   touch "config.json" || exit 1
   if id -u led-machine >/dev/null 2>&1; then
-    chown led-machine:led-machine "configs/"
-    chown led-machine:led-machine "$DIRECTORY"
-    chown led-machine:led-machine "$DIRECTORY/config.json"
+    chown led-machine:led-machine "./"
+    chown led-machine:led-machine "../"
+    chown led-machine:led-machine "config.json"
   fi
   echo "Created directory: $(pwd)"
 
