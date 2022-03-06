@@ -14,7 +14,7 @@ fi
 
 # Add user
 if ! id -u led-machine >/dev/null 2>&1; then
-  useradd -r -g led-machine -G gpio led-machine 2>/dev/null # create user with correct groups
+  useradd -r -g led-machine -G gpio,i2c,spi,input,dialout led-machine 2>/dev/null # create user with correct groups
   if ! id -u led-machine >/dev/null 2>&1; then
     echo Unable to create user
     exit 1
@@ -22,7 +22,7 @@ if ! id -u led-machine >/dev/null 2>&1; then
   passwd -l led-machine || (echo Could not lock led-machine passwd; exit 1)
 fi
 # Add user to groups
-usermod -a -G gpio led-machine || exit 1 # add groups to user just to make sure they have all needed groups
+usermod -a -G gpio,i2c,spi,input,dialout led-machine || exit 1 # add groups to user just to make sure they have all needed groups
 
 echo Created \"led-machine\" user and group.
 echo You can add a user to the group with \"adduser \<USER NAME HERE\> led-machine\".

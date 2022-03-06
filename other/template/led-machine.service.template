@@ -1,0 +1,12 @@
+[Unit]
+Description=LED Machine Plus using ##name## config
+
+[Service]
+TimeoutStartSec=1
+ExecStart=##led_root##/other/scripts/run.sh
+WorkingDirectory=##led_root##/program/configs/##name##
+User=led-machine
+Group=led-machine
+
+[Install]
+WantedBy=multi-user.target
