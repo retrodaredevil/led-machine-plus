@@ -161,7 +161,7 @@ object Parse {
             if (word.startsWith("#")) {
                 var hex = word.substring(1)
                 if (hex.length == 3) {
-                    hex = hex.toCharArray().joinToString { "$it$it" }
+                    hex = hex.toCharArray().joinToString("") { "$it$it" }
                 }
                 if (hex.length == 6) {
                     val value = hex.toIntOrNull(16)

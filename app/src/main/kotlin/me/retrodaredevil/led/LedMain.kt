@@ -6,8 +6,10 @@ import com.diozero.ws281xj.rpiws281x.WS281x
 import me.retrodaredevil.led.alter.LedMetadata
 import me.retrodaredevil.led.config.BaseConfig
 import me.retrodaredevil.led.program.LedProgram
-import java.io.File
 import org.slf4j.LoggerFactory
+import sun.misc.Signal
+import sun.misc.SignalHandler
+import java.io.File
 
 
 fun main(args: Array<String>) {
@@ -29,6 +31,13 @@ fun main(args: Array<String>) {
     val logger = LoggerFactory.getLogger("LedMain")
     logger.info("Starting")
 
+    val mainThread = Thread.currentThread()
+    Signal.handle(Signal("INT")) { sig: Signal ->
+        logger.info("Received INT termination signal")
+        mainThread.interrupt()
+        mainThread.join()
+    }
+
     logger.info("Using gpio: ${baseConfig.gpioPort} with led count: ${baseConfig.ledCount}")
     val pixels: LedDriverInterface = WS281x(baseConfig.gpioPort, 255, baseConfig.ledCount)
 
@@ -36,7 +45,7 @@ fun main(args: Array<String>) {
     val ledProgram = LedProgram(baseConfig)
     var firstUpdate = true
     pixels.use {
-        while (true) {
+        while (!Thread.currentThread().isInterrupted) {
             val time = System.currentTimeMillis() / 1000.0
             ledProgram.update(time)
             val alter = ledProgram.getAlter()
@@ -44,14 +53,13 @@ fun main(args: Array<String>) {
                 val position = i.toDouble()
                 val color = alter.alterPixel(time, position, null, metadata) ?: Color.BLACK
                 val color24Bit = color.to24Bit()
-//                if (firstUpdate || pixels.getPixelColour(i) != color24Bit) {
-//                    pixels.setPixelColour(i, color24Bit)
-//                }
-                pixels.setPixelColour(i, color24Bit)
+                if (firstUpdate || pixels.getPixelColour(i) != color24Bit) {
+                    pixels.setPixelColour(i, color24Bit)
+                }
             }
             firstUpdate = false
             pixels.render()
-//            Thread.sleep(3)
         }
+        logger.info("Going to gracefully exit!")
     }
 }

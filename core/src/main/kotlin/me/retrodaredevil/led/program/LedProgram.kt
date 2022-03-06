@@ -88,6 +88,14 @@ class LedState(
                 else -> listOf(AlterBlock.Block(null, 5.0), AlterBlock.Block(Color.BLACK, 3.0))
             }
             return AlterBlock(blockList, TimeMultiplierPercentGetter(LedConstants.slowDefaultPercentGetter, timeMultiplierGetter))
+        } else if ("single" in text) {
+            return AlterBlock(
+                    listOf(AlterBlock.Block(null, 5.0), AlterBlock.Block(Color.BLACK, virtualPixelCount - 5.0)),
+                    TimeMultiplierPercentGetter(
+                            { seconds -> LedConstants.quickBoundPercentGetter.getPercent(seconds) * (virtualPixelCount - 5.0) / virtualPixelCount},
+                            timeMultiplierGetter
+                    )
+            )
         } else if ("star" in text) {
             return AlterStar(totalPixelCount, 300, timeMultiplierGetter)
         } else if ("twinkle" in text) {
@@ -120,7 +128,7 @@ class LedProgram(
         for (message in messageQueue.popNewMessages()) {
             val context = MessageContext()
             LOGGER.debug("Got message: ${message.text}")
-            handleMessage(message.text, ledState, context)
+            handleMessage(message.text.lowercase(), ledState, context)
             LOGGER.debug("alter is now: ${getAlter()}")
         }
     }
