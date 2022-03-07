@@ -7,6 +7,7 @@ ExecStart=##led_root##/other/scripts/run.sh
 WorkingDirectory=##led_root##/program/configs/##name##
 #User=led-machine
 #Group=led-machine
+TimeoutStopSec=8
 
 [Install]
 WantedBy=multi-user.target

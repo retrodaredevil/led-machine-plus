@@ -22,5 +22,7 @@ class BaseConfig(
         @JsonProperty("end_skip")
         @get:JsonProperty("end_skip")
         val endPixelSkipCount: Int = 0,
+
+        val spi: Boolean = false
 ) {
 }

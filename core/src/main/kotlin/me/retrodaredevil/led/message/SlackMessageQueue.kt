@@ -42,12 +42,23 @@ class SlackMessageQueue(
             }
             this.client = null
         }
-        val client: SocketModeClient
-        try {
-            client = slack.socketMode(appToken, SocketModeClient.Backend.JavaWebSocket)
-        } catch (ex: IOException) {
-            LOGGER.error("Error in initial connect to slack", ex)
-            return
+        var client: SocketModeClient? = null
+        while (client == null) {
+            if (Thread.currentThread().isInterrupted) {
+                LOGGER.debug("Thread was interrupted.. Slack client never initialized")
+                return
+            }
+            try {
+                client = slack.socketMode(appToken, SocketModeClient.Backend.JavaWebSocket)
+            } catch (ex: IOException) {
+                LOGGER.warn("Error in initial connect to slack. Will try again", ex)
+                try {
+                    Thread.sleep(5000)
+                } catch (ex: InterruptedException) {
+                    LOGGER.debug("Interrupted while sleeping. Slack client never initialized")
+                    return
+                }
+            }
         }
         client.isAutoReconnectEnabled = true
         client.addEventsApiEnvelopeListener { eventsApiEnvelope ->
@@ -55,6 +66,7 @@ class SlackMessageQueue(
             client.sendSocketModeResponse(ack)
             handle(eventsApiEnvelope)
         }
+        this.client = client
     }
     private fun handle(eventsApiEnvelope: EventsApiEnvelope) {
         if ("events_api" == eventsApiEnvelope.type) {
@@ -85,8 +97,6 @@ class SlackMessageQueue(
     @Throws(Exception::class)
     override fun close() {
         if (thread.isAlive) {
-            // We don't really need this right now, but if we decide in the future to keep the thread alive
-            //   for a while, then this will be useful
             thread.interrupt()
         }
         client?.close()

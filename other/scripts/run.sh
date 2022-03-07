@@ -9,7 +9,5 @@ if [ -z "$BASE_CONFIG" ] || [ "$BASE_CONFIG" = " " ]; then
 fi
 echo Using base config = "$BASE_CONFIG"
 
-
-ls "$BASEDIR/../../program/"
 java -jar "$BASEDIR/../../program/led-machine-plus.jar" "$BASE_CONFIG"
 
