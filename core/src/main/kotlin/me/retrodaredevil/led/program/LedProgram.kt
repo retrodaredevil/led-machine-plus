@@ -6,10 +6,13 @@ import me.retrodaredevil.led.alter.*
 import me.retrodaredevil.led.percent.PercentGetter
 import me.retrodaredevil.led.percent.ReversingPercentGetter
 import me.retrodaredevil.led.config.BaseConfig
+import me.retrodaredevil.led.createDefaultMapper
 import me.retrodaredevil.led.message.MessageQueue
 import me.retrodaredevil.led.percent.BouncePercentGetter
 import me.retrodaredevil.led.percent.TimeMultiplierPercentGetter
 import me.retrodaredevil.util.getLogger
+import java.io.File
+import java.io.IOException
 import kotlin.jvm.Throws
 import kotlin.math.max
 import kotlin.math.min
@@ -119,10 +122,24 @@ class LedProgram(
 
     private val ledState = LedState(baseConfig.ledCount, baseConfig.ledCount - (baseConfig.startPixelSkipCount + baseConfig.endPixelSkipCount), baseConfig.startPixelSkipCount, baseConfig.endPixelSkipCount)
 
+    private val messageHistory = mutableListOf<String>()
+
     private var alterCache: Alter? = null
 
     init {
         handleMessage("rainbow", ledState, MessageContext())
+        val objectMapper = createDefaultMapper()
+        var saveFile: SaveFile? = null
+        try {
+            saveFile = objectMapper.readValue(SAVE_FILE, SaveFile::class.java)
+        } catch (ex: IOException) {
+            LOGGER.debug("Could not read save file", ex)
+        }
+        if (saveFile != null) {
+            for (message in saveFile.messages) {
+                handleMessage(message.lowercase(), ledState, MessageContext())
+            }
+        }
     }
 
     fun update(seconds: Double) {
@@ -132,6 +149,11 @@ class LedProgram(
             handleMessage(message.text.lowercase(), ledState, context)
             alterCache = null
             LOGGER.debug("alter is now: ${getAlter()}")
+            if (context.fullReset) {
+                messageHistory.clear()
+            }
+            messageHistory.add(message.text)
+            saveMessages()
         }
     }
     fun getAlter(): Alter {
@@ -151,6 +173,15 @@ class LedProgram(
         alterCache = alter
         return alter
     }
+    private fun saveMessages() {
+        val saveFile = SaveFile(messageHistory)
+        val objectMapper = createDefaultMapper()
+        try {
+            objectMapper.writeValue(SAVE_FILE, saveFile)
+        } catch (ex: IOException) {
+            LOGGER.warn("Could not save file", ex)
+        }
+    }
 
     @Throws(Exception::class)
     override fun close() {
@@ -159,5 +190,10 @@ class LedProgram(
 
     companion object {
         private val LOGGER = getLogger()
+        private val SAVE_FILE = File("saved.json")
     }
+
+    private class SaveFile(
+            val messages: List<String>
+    )
 }

@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory
 import sun.misc.Signal
 import sun.misc.SignalHandler
 import java.io.File
+import java.io.IOException
 import kotlin.system.exitProcess
 
 
@@ -29,11 +30,18 @@ fun main(args: Array<String>) {
     }
     val configFilePath = args[0]
     val configFile = File(configFilePath)
-    val objectMapper = createDefaultMapper()
-    val baseConfig = objectMapper.readValue(configFile, BaseConfig::class.java)
     println("Starting")
     val logger = LoggerFactory.getLogger("LedMain")
     logger.info("Starting")
+
+    val objectMapper = createDefaultMapper()
+    val baseConfig: BaseConfig
+    try {
+        baseConfig = objectMapper.readValue(configFile, BaseConfig::class.java)
+    } catch (ex: IOException) {
+        logger.error("Could not read configuration", ex)
+        return
+    }
 
     val mainThread = Thread.currentThread()
     val signalHandler = SignalHandler { sig: Signal ->

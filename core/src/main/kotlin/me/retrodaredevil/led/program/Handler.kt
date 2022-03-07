@@ -10,6 +10,7 @@ import me.retrodaredevil.token.TokenParse
 
 class MessageContext {
     var reset: Boolean = false
+    var fullReset: Boolean = false
 }
 
 fun handleMessage(text: String, ledState: LedState, context: MessageContext) {
@@ -40,6 +41,7 @@ fun handleMessage(text: String, ledState: LedState, context: MessageContext) {
         ledState.patternAlter = creator.create(ledState.startPixelSkipCount, ledState.virtualPixelCount, ledState.totalPixelCount - ledState.endPixelSkipCount, ledState.startPixelSkipCount)
     } else if (isOff) {
         context.reset = true
+        context.fullReset = true
         ledState.mainAlter = AlterSolid(Color.BLACK)
     }
     if (context.reset || "reset" in text) {
