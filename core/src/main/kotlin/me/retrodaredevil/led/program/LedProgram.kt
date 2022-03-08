@@ -33,6 +33,8 @@ class LedState(
     private val colorPercentGetter = LedConstants.defaultPercentGetter
     private val solidColorPercentGetter = ReversingPercentGetter(10.0, 15.0 * 60, 10.0)
 
+    var dim = 0.8
+
     var colorTimeMultiplier = 1.0
     var patternTimeMultiplier = 1.0
 
@@ -168,7 +170,8 @@ class LedProgram(
                         AlterBlock.Block(Color.BLACK, ledState.startPixelSkipCount.toDouble()),
                         AlterBlock.Block(null, ledState.virtualPixelCount.toDouble()),
                         AlterBlock.Block(Color.BLACK, ledState.endPixelSkipCount.toDouble()),
-                ), { 0.0 }, fadeWidth = 0.0)
+                ), { 0.0 }, fadeWidth = 0.0),
+                AlterDim(ledState.dim),
         ))
         alterCache = alter
         return alter

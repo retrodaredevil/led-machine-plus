@@ -62,4 +62,34 @@ fun handleMessage(text: String, ledState: LedState, context: MessageContext) {
             ledState.colorTimeMultiplier = timeMultiplier
         }
     }
+
+    var newDim: Double? = null
+    when {
+        "bright" in text -> {
+            newDim = 1.0
+        }
+        "normal" in text -> {
+            newDim = 0.8
+        }
+        "dim" in text -> {
+            newDim = 0.3 * 0.8
+        }
+        "dark" in text -> {
+            newDim = 0.07 * 0.8
+        }
+        "sleep" in text -> {
+            newDim = 0.008
+        }
+        "skyline" in text -> {
+            newDim = 0.005
+        }
+        else -> {
+            if (context.reset) {
+                newDim = 0.8;
+            }
+        }
+    }
+    if (newDim != null) {
+        ledState.dim = newDim
+    }
 }
