@@ -156,7 +156,7 @@ object Parse {
 
     fun parseColors(text: String): List<Color> {
         val r = mutableListOf<Color>()
-        val wordList = text.lowercase().split(" ")
+        val wordList = text.lowercase().split(Regex("\\s+"))
         for ((index, word) in wordList.withIndex()) {
             if (word.startsWith("#")) {
                 var hex = word.substring(1)
@@ -190,7 +190,7 @@ object Parse {
     }
 
     fun getStringAfter(text: String, targetText: String): String? {
-        val split = text.split(" ")
+        val split = text.split(Regex("\\s+"))
         var previousElement: String? = null
         for (element in split) {
             if (previousElement == targetText) {
@@ -202,7 +202,7 @@ object Parse {
     }
 
     fun getStringBefore(text: String, targetText: String): String? {
-        val split = text.split(" ")
+        val split = text.split(Regex("\\s+"))
         var previousElement: String? = null
         for (element in split) {
             if (previousElement != null && element == targetText) {
