@@ -26,3 +26,6 @@ If your LED strip has 4 wires (2 data wires), then you should control it using S
 This does not require root. All SPI configurations are hardcoded to use CE0 (pin 24).
 
 Run `sudo raspi-config`. Go to "Interface Options" and enable SPI.
+
+### TODO
+* Choose direction -- no reversing

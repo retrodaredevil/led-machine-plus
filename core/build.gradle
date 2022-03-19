@@ -13,8 +13,8 @@ repositories {
 }
 
 dependencies {
-    implementation project(":common")
-    implementation project(":token")
+    api project(":common")
+    api project(":token")
     implementation "com.slack.api:slack-api-client:$slackVersion"
     // https://mvnrepository.com/artifact/org.java-websocket/Java-WebSocket
     implementation "org.java-websocket:Java-WebSocket:1.5.2"

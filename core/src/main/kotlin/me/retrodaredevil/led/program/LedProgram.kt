@@ -33,6 +33,8 @@ class LedState(
     private val colorPercentGetter = LedConstants.defaultPercentGetter
     private val solidColorPercentGetter = ReversingPercentGetter(10.0, 15.0 * 60, 10.0)
 
+    val variableMap = mutableMapOf<String, String>()
+
     var dim = 0.8
 
     var colorTimeMultiplier = 1.0

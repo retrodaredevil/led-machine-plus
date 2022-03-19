@@ -2,10 +2,10 @@ package me.retrodaredevil.led.program
 
 import me.retrodaredevil.led.*
 import me.retrodaredevil.led.alter.AlterSolid
-import me.retrodaredevil.token.COMMENT_PARSE_PAIR
-import me.retrodaredevil.token.PARENTHESIS_PARSE_PAIR
-import me.retrodaredevil.token.SINGLE_LINE_COMMENT_PARSE_PAIR
-import me.retrodaredevil.token.TokenParse
+import me.retrodaredevil.led.token.VARIABLE_ASSIGN_PARSE_PAIR
+import me.retrodaredevil.led.token.VARIABLE_PARSE_PAIR
+import me.retrodaredevil.led.token.VariableAssignmentToken
+import me.retrodaredevil.token.*
 
 
 class MessageContext {
@@ -13,8 +13,29 @@ class MessageContext {
     var fullReset: Boolean = false
 }
 
-fun handleMessage(text: String, ledState: LedState, context: MessageContext) {
-    val tokens = TokenParse.parseToTokens(text, listOf(PARTITION_TOKEN, BLEND_TOKEN), listOf(COMMENT_PARSE_PAIR, SINGLE_LINE_COMMENT_PARSE_PAIR, PARENTHESIS_PARSE_PAIR))
+fun handleMessage(rawText: String, ledState: LedState, context: MessageContext) {
+    // Get the assignments without any bloat -- assignments should give raw strings, which is why we don't have as many parse pairs
+    val assignmentTokens = TokenParse.parseToTokens(rawText, listOf(), listOf(COMMENT_PARSE_PAIR, SINGLE_LINE_COMMENT_PARSE_PAIR, VARIABLE_ASSIGN_PARSE_PAIR))
+    assignmentTokens.mapNotNull { it as? VariableAssignmentToken }.forEach { variableAssignmentToken ->
+        ledState.variableMap[variableAssignmentToken.name] = variableAssignmentToken.value
+    }
+    // Replace the text with our variables
+    var text = rawText
+    for (i in 1..100) { // max recursion depth of 100 should be good
+        var anyChanged = false
+        // TODO iterate over longer names first so that something like coolThing and coolThing2 get replaced properly
+        ledState.variableMap.forEach { (name, value) ->
+            val newText = text.replace("$$name", value)
+            if (newText != text) {
+                anyChanged = true
+            }
+            text = newText
+        }
+        if (!anyChanged) {
+            break
+        }
+    }
+    val tokens = TokenParse.parseToTokens(text, listOf(PARTITION_TOKEN, BLEND_TOKEN), listOf(COMMENT_PARSE_PAIR, SINGLE_LINE_COMMENT_PARSE_PAIR, PARENTHESIS_PARSE_PAIR, VARIABLE_ASSIGN_PARSE_PAIR, VARIABLE_PARSE_PAIR))
     // TODO give a default currentPartitionOffset for the CreatorSettings
     val creatorReference = arrayOf<AlterCreator?>(null)
     val creator = Parse.tokensToCreator(
