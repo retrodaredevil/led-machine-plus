@@ -7,15 +7,15 @@ data class ParsePair(
         val startPattern: Regex,
         val endPattern: Regex,
         val recursiveInside: Boolean,
-        val condenseTokens: (List<Token>) -> Token,
+        val condenseTokens: (List<Token>) -> List<Token>,
 ) {
-    constructor(startPattern: String, endPattern: String, recursiveInside: Boolean, condenseTokens: (List<Token>) -> Token)
+    constructor(startPattern: String, endPattern: String, recursiveInside: Boolean, condenseTokens: (List<Token>) -> List<Token>)
             : this(Regex("^" + Regex.escape(startPattern)), Regex("^" + Regex.escape(endPattern)), recursiveInside, condenseTokens)
 }
 
-val COMMENT_PARSE_PAIR = ParsePair("/*", "*/", false) { NothingToken}
-val SINGLE_LINE_COMMENT_PARSE_PAIR = ParsePair("//", "\n", false) { NothingToken }
-val PARENTHESIS_PARSE_PAIR = ParsePair("(", ")", true, ::OrganizerToken)
+val COMMENT_PARSE_PAIR = ParsePair("/*", "*/", false) { listOf(NothingToken) }
+val SINGLE_LINE_COMMENT_PARSE_PAIR = ParsePair("//", "\n", false) { listOf(NothingToken) }
+val PARENTHESIS_PARSE_PAIR = ParsePair("(", ")", true) { listOf(OrganizerToken(it)) }
 
 object TokenParse {
     private val LOGGER = getLogger()
@@ -75,7 +75,7 @@ object TokenParse {
                         //   So come back to this later and maybe look at the Python code again to decide if that's what we want to do
                         LOGGER.debug("endedParsePair is false! Something didn't end with a ${parsePair.endPattern}")
                     }
-                    tokens.add(parsePair.condenseTokens(innerResult.tokens))
+                    tokens.addAll(parsePair.condenseTokens(innerResult.tokens))
                     continue
                 }
             }

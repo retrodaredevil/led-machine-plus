@@ -12,15 +12,15 @@ val VARIABLE_ASSIGN_PARSE_PAIR = ParsePair("[", "]", false) { tokens ->
         val string = it.data
         val split = string.split("=")
         if (split.size == 2) {
-            VariableAssignmentToken(split[0], split[1])
+            listOf(VariableAssignmentToken(split[0], split[1]))
         } else {
             null
         }
-    } ?: NothingToken
+    } ?: listOf(NothingToken)
 }
 // TODO using whitespace as the ending of this ParsePair isn't ideal. We should also end it when another ParsePair's start pattern is found
 val VARIABLE_PARSE_PAIR = ParsePair(Regex("^" + Regex.escape("$")), Regex("^\\s"), false) { tokens ->
-    tokens.firstNotNullOfOrNull { it as? StringToken }?.let { VariableToken(it.data) } ?: NothingToken
+    tokens.firstNotNullOfOrNull { it as? StringToken }?.let { listOf(VariableToken(it.data)) } ?: listOf(NothingToken)
 }
 
 data class VariableAssignmentToken(

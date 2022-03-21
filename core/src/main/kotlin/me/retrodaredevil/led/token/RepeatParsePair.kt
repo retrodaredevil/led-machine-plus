@@ -1,32 +1,32 @@
 package me.retrodaredevil.led.token
 
-import me.retrodaredevil.token.NothingToken
 import me.retrodaredevil.token.ParsePair
 import me.retrodaredevil.token.StringToken
 import me.retrodaredevil.token.Token
 
-val REPEAT_PARSE_PAIR = ParsePair("{", "}", false) { tokens ->
-    tokens.firstNotNullOfOrNull { it as? StringToken }?.let {
-        val string = it.data
-        val split = string.split(":")
-        if (split.size == 2) {
-            val times = split[0].toIntOrNull()
-            val content = split[1]
-            if (times != null) {
-                val divider = " " // constant for now. Maybe we'll have a way in the future to change this
-                var result = ""
-                for (i in 0 until times) {
-                    if (result.isNotEmpty()) {
-                        result += divider
-                    }
-                    result += content
-                }
-                StringToken(result)
-            } else {
-                null
-            }
-        } else {
-            null
+val REPEAT_PARSE_PAIR = ParsePair("{", "}", true) { tokens ->
+    if (tokens.isEmpty()) {
+        return@ParsePair tokens
+    }
+    val firstToken = tokens[0]
+    if (firstToken is StringToken) {
+        val string = firstToken.data
+        val split = string.split(":", limit=2)
+        if (split.size <= 1) {
+            return@ParsePair tokens
         }
-    } ?: NothingToken
+        val times = split[0].toIntOrNull()
+        val content = split[1]
+        val tokensToDuplicate = listOf(StringToken(content)) + tokens.subList(1, tokens.size)
+        if (times == null || times <= 1) {
+            return@ParsePair tokensToDuplicate
+        }
+        val r = mutableListOf<Token>()
+        for (i in 0 until times) {
+            r.addAll(tokensToDuplicate)
+        }
+        r
+    } else {
+        tokens
+    }
 }
