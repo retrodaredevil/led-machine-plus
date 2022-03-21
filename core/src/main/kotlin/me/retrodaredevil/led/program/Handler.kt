@@ -2,15 +2,17 @@ package me.retrodaredevil.led.program
 
 import me.retrodaredevil.led.*
 import me.retrodaredevil.led.alter.AlterSolid
-import me.retrodaredevil.led.token.VARIABLE_ASSIGN_PARSE_PAIR
-import me.retrodaredevil.led.token.VARIABLE_PARSE_PAIR
-import me.retrodaredevil.led.token.VariableAssignmentToken
+import me.retrodaredevil.led.token.*
 import me.retrodaredevil.token.*
 
 
 class MessageContext {
     var reset: Boolean = false
     var fullReset: Boolean = false
+}
+
+private fun toTokens(text: String): List<Token> {
+    return TokenParse.parseToTokens(text, listOf(PARTITION_TOKEN, BLEND_TOKEN), listOf(COMMENT_PARSE_PAIR, SINGLE_LINE_COMMENT_PARSE_PAIR, PARENTHESIS_PARSE_PAIR, VARIABLE_ASSIGN_PARSE_PAIR, VARIABLE_PARSE_PAIR, REPEAT_PARSE_PAIR))
 }
 
 fun handleMessage(rawText: String, ledState: LedState, context: MessageContext) {
@@ -20,7 +22,7 @@ fun handleMessage(rawText: String, ledState: LedState, context: MessageContext) 
         ledState.variableMap[variableAssignmentToken.name] = variableAssignmentToken.value
     }
     // Replace the text with our variables
-    var text = rawText
+    var text = rawText // we could consider doing variable replacement after parsing to tokens, then recursively parsing variables to tokens
     for (i in 1..100) { // max recursion depth of 100 should be good
         var anyChanged = false
         // TODO iterate over longer names first so that something like coolThing and coolThing2 get replaced properly
@@ -35,7 +37,8 @@ fun handleMessage(rawText: String, ledState: LedState, context: MessageContext) 
             break
         }
     }
-    val tokens = TokenParse.parseToTokens(text, listOf(PARTITION_TOKEN, BLEND_TOKEN), listOf(COMMENT_PARSE_PAIR, SINGLE_LINE_COMMENT_PARSE_PAIR, PARENTHESIS_PARSE_PAIR, VARIABLE_ASSIGN_PARSE_PAIR, VARIABLE_PARSE_PAIR))
+    val tokens = TokenParse.parseToTokens(text, listOf(PARTITION_TOKEN, BLEND_TOKEN), listOf(COMMENT_PARSE_PAIR, SINGLE_LINE_COMMENT_PARSE_PAIR, PARENTHESIS_PARSE_PAIR, VARIABLE_ASSIGN_PARSE_PAIR, VARIABLE_PARSE_PAIR, REPEAT_PARSE_PAIR))
+    println(tokens)
     // TODO give a default currentPartitionOffset for the CreatorSettings
     val creatorReference = arrayOf<AlterCreator?>(null)
     val creator = Parse.tokensToCreator(

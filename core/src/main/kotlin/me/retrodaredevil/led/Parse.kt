@@ -227,6 +227,25 @@ object Parse {
         r.add(current)
         return r
     }
+    private fun condenseTokens(tokens: List<Token>): List<Token> {
+        val r = mutableListOf<Token>()
+        var previousStringToken: StringToken? = null
+        for (token in tokens) {
+            if (token is StringToken) {
+                if (previousStringToken != null) {
+                    previousStringToken = StringToken(previousStringToken.data + " " + token.data)
+                    r[r.size - 1] = previousStringToken
+                } else {
+                    previousStringToken = token
+                    r.add(token)
+                }
+            } else {
+                previousStringToken = null
+                r.add(token)
+            }
+        }
+        return r
+    }
     fun tokensToCreator(
             tokens: List<Token>,
             textToColorAlter: (String, () -> Double) -> Alter?,
@@ -235,8 +254,9 @@ object Parse {
             creatorSettings: CreatorSettings,
             useProvidedTimeMultiplier: Boolean = false
     ): AlterCreator? {
+        val condensedTokens = condenseTokens(tokens)
         var creatorSettings: CreatorSettings = creatorSettings
-        val blendedTokenList = splitTokens(tokens, BLEND_TOKEN)
+        val blendedTokenList = splitTokens(condensedTokens, BLEND_TOKEN)
         if (blendedTokenList.size <= 1) {
             require(blendedTokenList.isNotEmpty())
             val partitionTokenList = splitTokens(blendedTokenList[0], PARTITION_TOKEN)
@@ -261,7 +281,7 @@ object Parse {
                 }
                 val timeMultiplierGetter: () -> Double = if (!useProvidedTimeMultiplier && directlyNestedTimeMultiplier != null) { { directlyNestedTimeMultiplier } } else creatorSettings.timeMultiplierGetter
                 val creatorsToCombine = mutableListOf<AlterCreator>()
-                for (token in tokens) {
+                for (token in condensedTokens) {
                     when (token) {
                         is StringToken -> {
                             val colorAlter = textToColorAlter(token.data, timeMultiplierGetter)
