@@ -1,5 +1,6 @@
 package me.retrodaredevil.led
 
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 
@@ -43,6 +44,18 @@ open class RawColor(
         result = 31 * result + g.hashCode()
         result = 31 * result + b.hashCode()
         return result
+    }
+
+    fun isAllLowerThan(color: RawColor): Boolean {
+        return r < color.r && g < color.b && b < color.b
+    }
+
+    fun clamp(): Color {
+        val max = max(max(r, g), b)
+        if (max <= 1) {
+            return Color(r, g, b)
+        }
+        return Color(r / max, g / max, b / max)
     }
 
 

@@ -114,6 +114,8 @@ class LedState(
                     AlterTwinkle(totalPixelCount, minPercent, maxPercent),
                     timeMultiplierGetter
             )
+        } else if ("random" in text) {
+            return AlterRandom.INSTANCE
         }
         return null
     }
