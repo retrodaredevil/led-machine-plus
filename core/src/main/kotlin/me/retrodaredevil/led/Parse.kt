@@ -121,6 +121,24 @@ class BlendAlterCreator(
     }
 }
 
+class MixAlterCreator(
+        private val creatorEntries: List<Entry>
+) : AlterCreator(CreatorData(
+        creatorEntries.any { it.creator.creatorData.hasColor },
+        creatorEntries.any { it.creator.creatorData.hasPattern },
+)) {
+
+    override fun create(startPixel: Int, pixelCount: Int, wrapAt: Int, wrapTo: Int): Alter {
+        val alterEntries = creatorEntries.map { AlterMix.Entry(it.creator.create(startPixel, pixelCount, wrapAt, wrapTo), it.brightnessMultiplier) }
+        return AlterMix(alterEntries)
+    }
+
+    class Entry(
+            val creator: AlterCreator,
+            val brightnessMultiplier: Double
+    )
+}
+
 data class CreatorSettings(
         // eventually we will have pixel offset information map here
         val currentPartitionOffset: Int,
@@ -328,12 +346,39 @@ object Parse {
                 return PartitionAlterCreator(creatorsToPartition, creatorSettings.currentPartitionOffset)
             }
         } else {
-            val creatorsToBlend = mutableListOf<AlterCreator>()
+            val blendCreators = mutableListOf<Pair<AlterCreator, Double?>>()
             for (tokenList in blendedTokenList) {
+                val percent = tokenList.mapNotNull {
+                    if (it is StringToken) {
+                        for (word in it.data.splitToSequence(Regex("\\s+"))) {
+                            if (word.endsWith("%")) {
+                                val number = word.substring(0, word.length - 1).toDoubleOrNull()
+                                if (number != null && number in 0.0..100.0) {
+                                    return@mapNotNull number / 100.0
+                                }
+                            }
+                        }
+                        null
+                    } else null
+                }.firstOrNull()
                 val creator = tokensToCreator(tokenList, textToColorAlter, textToPatternAlter, textToSpeedMultiplier, creatorSettings)
-                creatorsToBlend.add(creator ?: NOTHING_CREATOR)
+                blendCreators.add(Pair(creator ?: NOTHING_CREATOR, percent))
             }
-            return BlendAlterCreator(creatorsToBlend, creatorSettings.timeMultiplierGetter)
+            val percentCreators = blendCreators.mapNotNull { if (it.second != null) MixAlterCreator.Entry(it.first, it.second!!) else null }
+            if (percentCreators.isNotEmpty()) {
+                if (percentCreators.size == blendCreators.size) {
+                    return MixAlterCreator(percentCreators)
+                }
+                val totalSum = percentCreators.sumOf { it.brightnessMultiplier }
+                if (totalSum >= 1) {
+                    return MixAlterCreator(percentCreators)
+                }
+                val remainingPercent = 1.0 - totalSum
+                val individualBrightness = remainingPercent / (blendCreators.size - percentCreators.size)
+                val entries = blendCreators.map { MixAlterCreator.Entry(it.first, it.second ?: individualBrightness)}
+                return MixAlterCreator(entries)
+            }
+            return BlendAlterCreator(blendCreators.map { it.first }, creatorSettings.timeMultiplierGetter)
         }
     }
 

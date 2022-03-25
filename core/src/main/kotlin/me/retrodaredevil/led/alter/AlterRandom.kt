@@ -2,6 +2,10 @@ package me.retrodaredevil.led.alter
 
 import me.retrodaredevil.led.Color
 
+/**
+ * Takes an existing color, only uses its brightness, then sets it to a random color with the same brightness.
+ * The color will be reset one the current color has gone at or below the [minColor] threshold (usually 0,0,0).
+ */
 class AlterRandom(
         private val minColor: Color
 ) : Alter {
@@ -11,9 +15,9 @@ class AlterRandom(
             return null
         }
         var currentOverrideColor = colorMap[pixelPosition]
-        if (currentOverrideColor == null || currentColor.isAllLowerThan(minColor)) {
+        if (currentOverrideColor == null || currentColor.isAllLessThanOrEqual(minColor)) {
             // then reset it
-            currentOverrideColor = Color(Math.random(), Math.random(), Math.random())
+            currentOverrideColor = getRainbow(Math.random())
             colorMap[pixelPosition] = currentOverrideColor
         }
 
@@ -21,6 +25,6 @@ class AlterRandom(
         return (currentOverrideColor * ratioToScale).clamp()
     }
     companion object {
-        val INSTANCE = AlterRandom(Color(0.01, 0.01, 0.01))
+        val INSTANCE = AlterRandom(Color(0.0, 0.0, 0.0))
     }
 }

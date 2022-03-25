@@ -46,8 +46,8 @@ open class RawColor(
         return result
     }
 
-    fun isAllLowerThan(color: RawColor): Boolean {
-        return r < color.r && g < color.b && b < color.b
+    fun isAllLessThanOrEqual(color: RawColor): Boolean {
+        return r <= color.r && g <= color.b && b <= color.b
     }
 
     fun clamp(): Color {
