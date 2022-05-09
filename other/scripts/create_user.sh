@@ -15,6 +15,7 @@ fi
 # Add user
 if ! id -u led-machine >/dev/null 2>&1; then
   useradd -r -g led-machine -G gpio,i2c,spi,input,dialout,video led-machine 2>/dev/null # create user with correct groups
+  useradd -r -g led-machine -G gpio,input,dialout,video led-machine 2>/dev/null # exact same command as above, but with less groups in case some don't exist
   if ! id -u led-machine >/dev/null 2>&1; then
     echo Unable to create user
     exit 1
