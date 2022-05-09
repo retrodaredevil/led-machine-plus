@@ -24,7 +24,7 @@ if ! id -u led-machine >/dev/null 2>&1; then
 fi
 # Add user to groups
 usermod -a -G input,dialout,video,kmem led-machine || exit 1 # add groups to user just to make sure they have all needed groups
-usermod -a -G gpio,i2c,spi led-machine
+usermod -a -G gpio,i2c,spi led-machine || echo "^^^ But that is OK"
 
 echo Created \"led-machine\" user and group.
 echo You can add a user to the group with \"adduser \<USER NAME HERE\> led-machine\".
