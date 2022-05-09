@@ -11,11 +11,14 @@ if ! grep -q led-machine /etc/group >/dev/null 2>&1; then
   fi
 fi
 
+IMPORTANT_GROUPS=input,dialout,video,kmem
+UNIMPORTANT_GROUPS=gpio,i2c,spi
+
 
 # Add user
 if ! id -u led-machine >/dev/null 2>&1; then
-  useradd -r -g led-machine -G gpio,i2c,spi,input,dialout,video led-machine 2>/dev/null # create user with correct groups
-  useradd -r -g led-machine -G input,dialout,video led-machine 2>/dev/null # exact same command as above, but with less groups in case some don't exist
+  useradd -r -g led-machine -G "$UNIMPORTANT_GROUPS,$IMPORTANT_GROUPS" led-machine 2>/dev/null
+  useradd -r -g led-machine -G "$IMPORTANT_GROUPS" led-machine 2>/dev/null
   if ! id -u led-machine >/dev/null 2>&1; then
     echo Unable to create user
     exit 1
@@ -23,8 +26,8 @@ if ! id -u led-machine >/dev/null 2>&1; then
   passwd -l led-machine || (echo Could not lock led-machine passwd; exit 1)
 fi
 # Add user to groups
-usermod -a -G input,dialout,video,kmem led-machine || exit 1 # add groups to user just to make sure they have all needed groups
-usermod -a -G gpio,i2c,spi led-machine || echo "^^^ But that is OK"
+usermod -a -G "$IMPORTANT_GROUPS" led-machine || exit 1 # add groups to user just to make sure they have all needed groups
+usermod -a -G "$UNIMPORTANT_GROUPS" led-machine 2>/dev/null || echo "On a system that does not support gpio,i2c,spi groups"
 
 echo Created \"led-machine\" user and group.
 echo You can add a user to the group with \"adduser \<USER NAME HERE\> led-machine\".

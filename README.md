@@ -27,5 +27,10 @@ This does not require root. All SPI configurations are hardcoded to use CE0 (pin
 
 Run `sudo raspi-config`. Go to "Interface Options" and enable SPI.
 
+### Building yourself
+```shell
+./gradlew app:jar
+```
+
 ### TODO
 * Choose direction -- no reversing
