@@ -23,6 +23,13 @@ class BaseConfig(
         @get:JsonProperty("end_skip")
         val endPixelSkipCount: Int = 0,
 
-        val spi: Boolean = false
+        val spi: Boolean = false,
+
+        val order: ColorOrder = ColorOrder.GRB
 ) {
+}
+
+enum class ColorOrder {
+    GRB, // used by many WS2812s
+    RGB, // used by many WS2815s
 }

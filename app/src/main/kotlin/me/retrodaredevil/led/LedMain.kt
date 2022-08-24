@@ -8,6 +8,7 @@ import com.diozero.ws281xj.rpiws281x.WS281xNative
 import com.diozero.ws281xj.spi.WS281xSpi
 import me.retrodaredevil.led.alter.LedMetadata
 import me.retrodaredevil.led.config.BaseConfig
+import me.retrodaredevil.led.config.ColorOrder
 import me.retrodaredevil.led.program.LedProgram
 import org.slf4j.LoggerFactory
 import sun.misc.Signal
@@ -16,6 +17,10 @@ import java.io.File
 import java.io.IOException
 import kotlin.system.exitProcess
 
+private fun orderToStripType(colorOrder: ColorOrder): StripType = when(colorOrder) {
+    ColorOrder.GRB -> StripType.WS2811_GRB
+    ColorOrder.RGB -> StripType.WS2811_RGB
+}
 
 fun main(args: Array<String>) {
     when {
@@ -58,6 +63,7 @@ fun main(args: Array<String>) {
     Signal.handle(Signal("TERM"), signalHandler) // systemd stop handling
 
     logger.info("Using gpio: ${baseConfig.gpioPort} with led count: ${baseConfig.ledCount}")
+    val stripType = orderToStripType(baseConfig.order)
     val pixels: LedDriverInterface = if (baseConfig.spi) {
         val controller = when (val gpio = baseConfig.gpioPort) {
             7, 8, 9, 10, 11 -> 0
@@ -65,8 +71,8 @@ fun main(args: Array<String>) {
             else -> throw IllegalArgumentException("Gpio: $gpio does not support SPI!")
         }
         // chip select is hard coded to 0 for now
-        WS281xSpi(controller, 0, WS281xSpi.Protocol.PROTOCOL_800KHZ, StripType.WS2812, baseConfig.ledCount, 255)
-    } else WS281x(baseConfig.gpioPort, 255, baseConfig.ledCount)
+        WS281xSpi(controller, 0, WS281xSpi.Protocol.PROTOCOL_800KHZ, stripType, baseConfig.ledCount, 255)
+    } else WS281x(800_000, 5, baseConfig.gpioPort, 255, baseConfig.ledCount, stripType, 0)
     logger.info("pixels is of type: ${pixels.javaClass}")
 
     val metadata = LedMetadata()
