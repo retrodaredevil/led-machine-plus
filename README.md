@@ -44,6 +44,7 @@ You will need to enable SPI on your Orange Pi.
 
 ### TODO
 * Choose directijon -- no reversing
+* Use manifest file for slack setup
 
 ### Other stuff
 Useful to prefer WiFi for internet:
@@ -54,3 +55,33 @@ metric 300
 interface wlan0
 metric 200
 ```
+
+Useful for debugging:
+```shell
+sudo journalctl -u led-machine-main.service -f -n100
+```
+
+### Slack App Setup
+* App level token needs to have `connections:write` scope. This token will be pasted into the `app_token` property.
+* Enable Socket Mode
+* Go to "OAuth & Permissions" 
+  * Add `channels:history` (most important), `groups:history`, `im:history`, as Bot Token Scopes
+    * Optionally add these for future use: `channels:write`, `reactions:write`, `reactions:read`, `chat:write`, `channels:read`
+  * Install to your workspace
+  * Get the Bot User OAuth Token that will be pasted into the `bot_token` property.
+* Go to "Event Subscriptions" and Enable Events
+  * Subscribe to bot events: `message.channels`, `message.groups`, `message.im`
+* Add your bot to the channel you want it to have access to
+
+### Discord App Setup
+* Create application at https://discord.com/developers/applications
+  * Go to Bot
+    * Create a bot
+    * Create "Reset Token", confirm, and copy the newly generated token. You will need this in your configuration
+    * Enable "Message Content Intent"
+  * Go to OAuth2 > URL Generator
+    * Add scope "bot"
+      * Add permission: "Read Messages/View Channels", "Add Reactions"
+    * Click on the generated URL and add the application to your server
+* Enable developer mode in your discord client
+  * Right-click on the channel you want to use and click "copy id".

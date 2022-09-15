@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import com.slack.api.Slack
 import com.slack.api.SlackConfig
 import com.slack.api.util.http.SlackHttpClient
+import me.retrodaredevil.led.message.DiscordMessageQueue
 import me.retrodaredevil.led.message.MessageQueueCreator
 import me.retrodaredevil.led.message.SlackMessageQueue
 import okhttp3.OkHttpClient
@@ -18,6 +19,7 @@ import java.time.Duration
  */
 @JsonSubTypes(
         JsonSubTypes.Type(SlackMessageConfig::class),
+        JsonSubTypes.Type(DiscordMessageConfig::class),
 )
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 sealed interface MessageConfig {
@@ -48,6 +50,22 @@ class SlackMessageConfig(
                     .connectTimeout(Duration.ofSeconds(4))
                     .build()))
             SlackMessageQueue(slack, appToken, channel)
+        }
+    }
+}
+
+@JsonTypeName("discord")
+class DiscordMessageConfig(
+        @JsonProperty("bot_token")
+        @get:JsonProperty("bot_token")
+        val botToken: String,
+        @JsonProperty("channel_id")
+        @get:JsonProperty("channel_id")
+        val channelId: Long,
+) : MessageConfig {
+    override fun toMessageQueueCreator(): MessageQueueCreator {
+        return MessageQueueCreator {
+            DiscordMessageQueue(botToken, channelId)
         }
     }
 }

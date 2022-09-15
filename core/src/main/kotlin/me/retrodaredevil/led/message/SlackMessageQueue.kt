@@ -73,6 +73,7 @@ class SlackMessageQueue(
             val payload = eventsApiEnvelope.payload.asJsonObject
             val eventObject = payload.getAsJsonObject("event")
             if (eventObject["bot_id"] != null) {
+                // don't process messages sent by a bot (potentially use in the future)
                 return
             }
             if ("message" == eventObject["type"].asString && eventObject["subtype"] == null) {
