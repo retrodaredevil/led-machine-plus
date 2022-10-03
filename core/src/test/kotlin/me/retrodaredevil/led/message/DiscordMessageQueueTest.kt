@@ -3,7 +3,8 @@ package me.retrodaredevil.led.message
 
 fun main() {
     val botToken = "your token here"
-    val messageQueue = DiscordMessageQueue("MTAxODk3OTQ5MTg2MDcyOTkyNw.GX8Qxk.fXcUtfpEFPcnykANGfyRORnIgXSIVR4XL5P25M", 1015428094938595370)
+    val channelId: Long = 1015428094938595370 // put your channel ID here
+    val messageQueue = DiscordMessageQueue(botToken, channelId)
     messageQueue.use {
         for (i in 1..100) {
             Thread.sleep(1000)
