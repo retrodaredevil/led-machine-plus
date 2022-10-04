@@ -61,6 +61,12 @@ Useful for debugging:
 sudo journalctl -u led-machine-main.service -f -n100
 ```
 
+Useful for copying jar:
+```shell
+./gradlew app:jar
+rsync app/build/libs/app-0.0.1.jar pi@192.168.1.151:/opt/led-machine-plus/program/led-machine-plus.jar
+```
+
 ### Slack App Setup
 * App level token needs to have `connections:write` scope. This token will be pasted into the `app_token` property.
 * Enable Socket Mode

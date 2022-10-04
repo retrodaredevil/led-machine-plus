@@ -54,7 +54,41 @@ fun handleMessage(rawText: String, ledState: LedState, context: MessageContext) 
     )
     creatorReference[0] = creator
 
-    val isOff = "off" in text
+
+    var newDim: Double? = null
+    when {
+        "off" in text -> {
+            newDim = 0.0
+        }
+        "bright" in text -> {
+            newDim = 1.0
+        }
+        "normal" in text -> {
+            newDim = 0.8
+        }
+        "dim" in text -> {
+            newDim = 0.3 * 0.8
+        }
+        "dark" in text -> {
+            newDim = 0.07 * 0.8
+        }
+        "sleep" in text -> {
+            newDim = 0.008
+        }
+        "skyline" in text -> {
+            newDim = 0.005
+        }
+    }
+    if (newDim != null) {
+        if ("fade" in text) {
+            ledState.dimTarget = newDim
+        } else {
+            ledState.dim = newDim
+            ledState.dimTarget = null
+        }
+    }
+    val wasOffRequested = newDim != null && ledState.dim == 0.0 && (ledState.dimTarget == null) // only true for regular off, not for fade off
+
     val colorPresent = creator != null && creator.creatorData.hasColor
     val patternPresent = creator != null && creator.creatorData.hasPattern
     if (colorPresent) {
@@ -63,7 +97,7 @@ fun handleMessage(rawText: String, ledState: LedState, context: MessageContext) 
     } else if (patternPresent) {
         creator!!
         ledState.patternAlter = creator.create(ledState.startPixelSkipCount, ledState.virtualPixelCount, ledState.totalPixelCount - ledState.endPixelSkipCount, ledState.startPixelSkipCount)
-    } else if (isOff) {
+    } else if (wasOffRequested) {
         context.reset = true
         context.fullReset = true
         ledState.mainAlter = AlterSolid(Color.BLACK)
@@ -87,33 +121,4 @@ fun handleMessage(rawText: String, ledState: LedState, context: MessageContext) 
         }
     }
 
-    var newDim: Double? = null
-    when {
-        "bright" in text -> {
-            newDim = 1.0
-        }
-        "normal" in text -> {
-            newDim = 0.8
-        }
-        "dim" in text -> {
-            newDim = 0.3 * 0.8
-        }
-        "dark" in text -> {
-            newDim = 0.07 * 0.8
-        }
-        "sleep" in text -> {
-            newDim = 0.008
-        }
-        "skyline" in text -> {
-            newDim = 0.005
-        }
-        else -> {
-            if (context.reset) {
-                newDim = 0.8;
-            }
-        }
-    }
-    if (newDim != null) {
-        ledState.dim = newDim
-    }
 }

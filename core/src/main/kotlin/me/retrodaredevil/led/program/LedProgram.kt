@@ -14,9 +14,7 @@ import me.retrodaredevil.util.getLogger
 import java.io.File
 import java.io.IOException
 import kotlin.jvm.Throws
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.pow
+import kotlin.math.*
 
 object LedConstants {
     val defaultPercentGetter: PercentGetter = ReversingPercentGetter(2.0, 10.0 * 60, 2.0)
@@ -36,6 +34,9 @@ class LedState(
     val variableMap = mutableMapOf<String, String>()
 
     var dim = 0.8
+    var dimTarget: Double? = null
+    /** In dim per second. Must be positive */
+    val dimSpeed = 0.5
 
     var colorTimeMultiplier = 1.0
     var patternTimeMultiplier = 1.0
@@ -44,6 +45,8 @@ class LedState(
     var patternAlter: Alter = AlterNothing
 
     fun reset() {
+        dim = 0.8
+        dimTarget = null
         colorTimeMultiplier = 1.0
         patternTimeMultiplier = 1.0
         patternAlter = AlterNothing
@@ -131,6 +134,7 @@ class LedProgram(
     private val messageHistory = mutableListOf<String>()
 
     private var alterCache: Alter? = null
+    private var lastSeconds: Double? = null
 
     init {
         handleMessage("rainbow", ledState, MessageContext())
@@ -149,6 +153,32 @@ class LedProgram(
     }
 
     fun update(seconds: Double) {
+        val lastSeconds = this.lastSeconds
+        this.lastSeconds = seconds
+        val delta = if (lastSeconds == null) 0.0 else seconds - lastSeconds
+        val dimTarget = ledState.dimTarget
+        if (dimTarget != null && ledState.dim != dimTarget) {
+            alterCache = null
+            val offset = dimTarget - ledState.dim
+            val moveDistance = delta * ledState.dimSpeed
+            println("offset: $offset")
+            println("moveDistance: $moveDistance")
+            if (offset.absoluteValue < moveDistance) {
+                println("Reached")
+                ledState.dim = dimTarget
+                ledState.dimTarget = null
+                if (dimTarget == 0.0) {
+                    // This was a "fade off" command, so we want to reset everything
+                    ledState.reset()
+                    ledState.mainAlter = AlterSolid(Color.BLACK)
+                    messageHistory.clear()
+                }
+            } else {
+                ledState.dim += offset.sign * moveDistance
+            }
+            println("Dim now: ${ledState.dim}")
+        }
+
         for (message in messageQueue.popNewMessages()) {
             val context = MessageContext()
             LOGGER.debug("Got message: ${message.text}")

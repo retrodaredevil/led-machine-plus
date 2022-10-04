@@ -53,7 +53,6 @@ fun main(args: Array<String>) {
         logger.info("Received ${sig.name} termination signal")
         mainThread.interrupt()
         try {
-            @Suppress("BlockingMethodInNonBlockingContext")
             mainThread.join(100)
         } catch (ex: InterruptedException) {
             logger.error("Could not stop the main thread! It will forcibly be stopped.")
