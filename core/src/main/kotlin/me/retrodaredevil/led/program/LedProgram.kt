@@ -36,7 +36,7 @@ class LedState(
     var dim = 0.8
     var dimTarget: Double? = null
     /** In dim per second. Must be positive */
-    val dimSpeed = 0.5
+    var dimSpeed = 0.5
 
     var colorTimeMultiplier = 1.0
     var patternTimeMultiplier = 1.0
@@ -47,6 +47,7 @@ class LedState(
     fun reset() {
         dim = 0.8
         dimTarget = null
+        dimSpeed = 0.5
         colorTimeMultiplier = 1.0
         patternTimeMultiplier = 1.0
         patternAlter = AlterNothing
@@ -161,12 +162,10 @@ class LedProgram(
             alterCache = null
             val offset = dimTarget - ledState.dim
             val moveDistance = delta * ledState.dimSpeed
-            println("offset: $offset")
-            println("moveDistance: $moveDistance")
             if (offset.absoluteValue < moveDistance) {
-                println("Reached")
                 ledState.dim = dimTarget
                 ledState.dimTarget = null
+                ledState.dimSpeed = 0.5 // reset
                 if (dimTarget == 0.0) {
                     // This was a "fade off" command, so we want to reset everything
                     ledState.reset()
@@ -176,7 +175,6 @@ class LedProgram(
             } else {
                 ledState.dim += offset.sign * moveDistance
             }
-            println("Dim now: ${ledState.dim}")
         }
 
         for (message in messageQueue.popNewMessages()) {

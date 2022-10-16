@@ -4,6 +4,7 @@ import me.retrodaredevil.led.*
 import me.retrodaredevil.led.alter.AlterSolid
 import me.retrodaredevil.led.token.*
 import me.retrodaredevil.token.*
+import kotlin.math.absoluteValue
 
 
 class MessageContext {
@@ -82,9 +83,16 @@ fun handleMessage(rawText: String, ledState: LedState, context: MessageContext) 
     if (newDim != null) {
         if ("fade" in text) {
             ledState.dimTarget = newDim
+            val duration = Parse.parseDuration(text)
+            if (duration != null) {
+                val distance = (ledState.dim - newDim).absoluteValue
+                val targetDurationSeconds = duration.toSeconds()
+                ledState.dimSpeed = distance / targetDurationSeconds
+            }
         } else {
             ledState.dim = newDim
             ledState.dimTarget = null
+            ledState.dimSpeed = 0.5 // reset dim speed
         }
     }
     val wasOffRequested = newDim != null && ledState.dim == 0.0 && (ledState.dimTarget == null) // only true for regular off, not for fade off

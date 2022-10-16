@@ -5,6 +5,8 @@ import me.retrodaredevil.led.percent.ReversingPercentGetter
 import me.retrodaredevil.led.percent.TimeMultiplierPercentGetter
 import me.retrodaredevil.token.*
 import me.retrodaredevil.util.getLogger
+import java.time.Duration
+import java.time.format.DateTimeParseException
 
 val PARTITION_TOKEN = StaticToken("partition", "|")
 val BLEND_TOKEN = StaticToken("blend", "~")
@@ -205,6 +207,31 @@ object Parse {
             }
         }
         return r
+    }
+
+    fun parseDuration(text: String): Duration? {
+        var duration = Duration.ZERO
+        var storedNumber: Long? = null
+        for (word in text.split(Regex("\\s+"))) {
+            val number = word.toLongOrNull()
+            if (number != null && number >= 0) {
+                storedNumber = number
+            } else if (storedNumber != null) {
+                val simpleWord = word.uppercase()
+                        .replace(Regex("SECONDS|SECOND"), "S")
+                        .replace(Regex("MINUTES|MINUTE"), "M")
+                        .replace(Regex("HOURS|HOUR"), "H")
+                        .replace(Regex("DAYS|DAY"), "D")
+                when (simpleWord) {
+                    "S" -> duration += Duration.ofSeconds(storedNumber)
+                    "M" -> duration += Duration.ofMinutes(storedNumber)
+                    "H" -> duration += Duration.ofHours(storedNumber)
+                    "D" -> duration += Duration.ofDays(storedNumber)
+                }
+                storedNumber = null
+            }
+        }
+        return if (duration.isZero) null else duration
     }
 
     fun getStringAfter(text: String, targetText: String): String? {
