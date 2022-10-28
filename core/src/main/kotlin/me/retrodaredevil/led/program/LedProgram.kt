@@ -148,7 +148,7 @@ class LedProgram(
         }
         if (saveFile != null) {
             for (message in saveFile.messages) {
-                handleMessage(message.lowercase(), ledState, MessageContext())
+                handleMessage(message.lowercase(), ledState, MessageContext(), fromLongAgo = true)
             }
         }
     }

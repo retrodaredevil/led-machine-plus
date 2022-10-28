@@ -16,7 +16,7 @@ private fun toTokens(text: String): List<Token> {
     return TokenParse.parseToTokens(text, listOf(PARTITION_TOKEN, BLEND_TOKEN), listOf(COMMENT_PARSE_PAIR, SINGLE_LINE_COMMENT_PARSE_PAIR, PARENTHESIS_PARSE_PAIR, VARIABLE_ASSIGN_PARSE_PAIR, VARIABLE_PARSE_PAIR, REPEAT_PARSE_PAIR))
 }
 
-fun handleMessage(rawText: String, ledState: LedState, context: MessageContext) {
+fun handleMessage(rawText: String, ledState: LedState, context: MessageContext, fromLongAgo: Boolean = false) {
     // Get the assignments without any bloat -- assignments should give raw strings, which is why we don't have as many parse pairs
     val assignmentTokens = TokenParse.parseToTokens(rawText, listOf(), listOf(COMMENT_PARSE_PAIR, SINGLE_LINE_COMMENT_PARSE_PAIR, VARIABLE_ASSIGN_PARSE_PAIR))
     assignmentTokens.mapNotNull { it as? VariableAssignmentToken }.forEach { variableAssignmentToken ->
@@ -81,7 +81,7 @@ fun handleMessage(rawText: String, ledState: LedState, context: MessageContext) 
         }
     }
     if (newDim != null) {
-        if ("fade" in text) {
+        if (!fromLongAgo && "fade" in text) {
             ledState.dimTarget = newDim
             val duration = Parse.parseDuration(text)
             if (duration != null) {
