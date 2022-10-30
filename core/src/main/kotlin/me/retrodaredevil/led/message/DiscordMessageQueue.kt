@@ -8,6 +8,7 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.reactor.mono
+import me.retrodaredevil.util.getLogger
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -15,6 +16,10 @@ class DiscordMessageQueue(
         botToken: String,
         private val channelId: Long
 ) : MessageQueue {
+    companion object {
+        private val LOGGER = getLogger()
+    }
+
     private val thread: Thread = Thread(this::runThread)
 
     private val queue: Queue<Message> = ConcurrentLinkedQueue()
@@ -40,7 +45,12 @@ class DiscordMessageQueue(
                                 queue.add(message)
 
                                 val heartReaction = ReactionEmoji.unicode("\u2764")
-                                discordMessage.addReaction(heartReaction).awaitSingleOrNull()
+                                try {
+                                    discordMessage.addReaction(heartReaction).awaitSingleOrNull()
+                                } catch (e: Exception) {
+                                    // The type of this exception is likely a ClientException, but for now catch everything just in case
+                                    LOGGER.warn("Was unable to add reaction", e)
+                                }
                             }
                         }
             }

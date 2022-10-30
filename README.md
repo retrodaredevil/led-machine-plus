@@ -7,6 +7,9 @@ This can be configured to poll messages from a Slack channel. Those messages con
 ### Installing
 ```shell
 curl https://raw.githubusercontent.com/retrodaredevil/led-machine-plus/master/other/scripts/clone_install.sh | sudo bash
+
+# If you need to install java:
+sudo apt install openjdk-11-jdk openjdk-11-jdk-headless
 ```
 
 ### Configuration
