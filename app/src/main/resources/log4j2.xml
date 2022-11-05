@@ -18,5 +18,12 @@
         <Logger name="com.slack.api" level="INFO">
             <AppenderRef ref="Console"/>
         </Logger>
+        <!--https://docs.discord4j.com/logging/#available-loggers-->
+        <Logger name="discord4j.gateway" level="INFO">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="reactor.netty" level="INFO">
+            <AppenderRef ref="Console"/>
+        </Logger>
     </Loggers>
 </Configuration>
