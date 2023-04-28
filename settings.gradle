@@ -13,3 +13,5 @@ include 'app'
 include 'core'
 include 'token'
 include 'common'
+include 'server'
+
