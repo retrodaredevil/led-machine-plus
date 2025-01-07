@@ -10,11 +10,11 @@ dependencies {
     ext {
     }
 
-    // TODO upgrade slf4j
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    implementation("org.slf4j:slf4j-api:1.7.36") // http://www.slf4j.org/download.html
+    implementation("org.slf4j:slf4j-api:2.0.16") // http://www.slf4j.org/download.html
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.11.0")
+    // https://junit.org/junit5/
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

@@ -13,7 +13,7 @@ dependencies {
     implementation("com.diozero:diozero-core:$diozero")
     implementation("com.diozero:diozero-ws281x-java:$diozero")
 
-    val log4jVersion = "2.18.0" // https://logging.apache.org/log4j/2.x/javadoc.html
+    val log4jVersion = "2.24.3" // https://logging.apache.org/log4j/2.x/release-notes.html
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion")
 }
 
