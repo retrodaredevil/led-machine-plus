@@ -1,42 +1,150 @@
 # LED Machine Plus
-LED Machine Plus is a Kotlin rewrite of [LED Machine](https://github.com/retrodaredevil/led-machine),
-which was written in Python.
 
-This can be configured to poll messages from a Slack channel. Those messages control WS281x LEDs over a GPIO pin.
+LED Machine Plus controls an LED strip by sending messages in a Discord channel.
+The message you send configures the color, speed, and pattern displayed on the LED strip.
 
-### Notes
+This can be configured to poll messages from a Discord channel. Those messages control WS281x LEDs over a GPIO pin.
 
-Why Kotlin? Kotlin is a high level language that I enjoy writing code in.
-Using something like Python will result in a drop in FPS because of the slowness of floating point operations in Python.
-Kotlin won't be as fast as a low level language like C++ or Rust, but it is not the bottleneck for the FPS of the LED strip.
+The contents of this readme will help you understand what you need to have and to do to set up LED Machine!
 
-* The wait time between renders is this equation (1.25 µs per bit)
-  * Source: https://github.com/jgarff/rpi_ws281x/blob/7fc0bf8b31d715bbecf28e852ede5aaa388180da/ws2811.c#L1226
-  * wait_microseconds = channel_count * led_count * 8 * 1.25 + 300
-  * Channel count is normally 3, so to get the FPS do this:
-    * 1000000 / (led_count * 3 * 8 * 1.25 + 300)
-    * If you have 1200 LEDs, the FPS will be 27.5 fps
-    * If you have 300 LEDs, the FPS will be 107.5 fps
 
-### Installing
+## Features
+
+* Runs in an unprivileged Docker container
+* Create custom patterns by simply listing the colors you want to be blended together
+* HEX color code support (#RRGGBB or #RGB syntax)
+* Discord bot reacts to your messages so you know they were received
+* "Fade off 10 minutes" - fades off over 10 minutes
+
+
+## Prerequisites
+
+* WS281x LED strip
+* A Raspberry Pi device, or any device that supports the SPI protocol through its GPIO
+* Your device should have an up-to-date version of its operating system, preferably DietPi
+* Docker should be Installed on your device
+
+
+## Hardware Setup
+
+* Connect
+  * Data wires
+    * LED strip's ground to your device's ground
+    * LED strip's data wire to the SPI 0 MOSI pin ([GPIO 10 / pin 19](https://pinout.xyz/pinout/pin19_gpio10/) on Raspberry Pi Devices)
+      * Alternatively, on Raspberry Pi devices (but not an RPi 5) you may use [GPIO 18 / pin 12](https://pinout.xyz/pinout/pin12_gpio18/) and don't enable SPI
+  * Power to your LED strip (do not use your device's 5v power to power your LEDs) - Get an external 5v (or 12v depending on your LED strip) power supply
+    * Connect LED strip's positive to power supply's positive
+    * Connect LED strip's ground to power supply's ground
+
+Use `raspi-config` or `dietpi-config` to enable SPI on your device.
+
+
+## LED Machine Setup
+
+Run these commands to start your setup:
+
 ```shell
-curl https://raw.githubusercontent.com/retrodaredevil/led-machine-plus/master/other/scripts/clone_install.sh | sudo bash
+sudo mkdir -p /opt/containers/led-machine/data
+sudo chown -R 2000:2000 /opt/containers/led-machine
 
-# If you need to install java:
-sudo apt install openjdk-11-jdk openjdk-11-jdk-headless
+mkdir ~/Documents/led-machine
+cd ~/Documents/led-machine
+# Note the result of this command:
+getent group spi
+# Create and edit docker-compose.yml
+nano docker-compose.yml
 ```
 
-### Configuration
-First you should create a configuration.
+Paste this into your docker-compose.yml file:
 
-```shell
-cd program
-sudo ./create_config.sh main
+```yaml
+services:
+  led-machine:
+    image: ghcr.io/retrodaredevil/led-machine:edge
+    container_name: led-machine
+    user: 2000:2000
+    group_add:
+      - THE RESULT OF THE getend group spi COMMAND HERE
+    devices:
+      - /dev/spidev0.0
+    command: /app/config/config.json
+    working_dir: /app/data  # The save file (saved.json) is saved in the working directory
+    volumes:
+      - ./config:/app/config:ro
+      - /opt/containers/led-machine/data:/app/data  # Optional, but recommended
+      - /opt/containers/led-machine/jvmlog:/app/jvmlog  # Optional
+    restart: unless-stopped
 ```
 
-Configuration takes place in the `program/configs/main/` directory by default.
+Now we want to create our configuration file:
 
-It is recommended to use pin 12 (GPIO 18), as that is the only pin that is known to work.
+```shell
+mkdir config
+nano config/config.json
+```
+
+Paste this into your `config.json` file that you are now editing:
+
+```json
+{
+  "message_config": {
+    "type": "discord",
+    "bot_token": "secret",
+    "channel_id": 123
+  },
+  "led_count": 50,
+  "gpio": 99,
+  "start_skip": 0,
+  "spi": true,
+  "order": "RGB"
+}
+```
+
+Edit the contents of `config.json` accordingly. Replace `secret` with your Discord bot token and replace `123` with your channel ID (skip to the section below about setting up a Discord bot if necessary).
+Replace `50` with your LED count.
+Replace `99` with the GPIO pin you are using.
+Optionally set `spi` to false if you are not using SPI.
+
+Now run this to start your container:
+
+```shell
+docker compose up -d
+```
+
+To check to make sure everything is successful, we can check the logs:
+
+```shell
+docker compose logs
+```
+
+Additionally, we can make sure that the service is not in a crash loop:
+
+```console
+lavender@ledpi:~/Documents/led-machine$ docker compose ps
+NAME          IMAGE                                     COMMAND                  SERVICE       CREATED        STATUS         PORTS
+led-machine   ghcr.io/retrodaredevil/led-machine:edge   "java -XX:ErrorFile=…"   led-machine   2 minutes ago  Up 30 seconds
+```
+
+You can see that with the above output, the container has been up for 30 seconds, which means enough time has passed for us to be confident that it's working!
+
+Now send some messages in your Discord channel. Try `rainbow`.
+If LED Machine reacts to your message with a heart, then you configured your bot correctly.
+Additionally, if the LEDs turn on, it's working as expected.
+
+
+## Discord App Setup
+* Create application at https://discord.com/developers/applications
+  * Go to Bot
+    * Create a bot
+    * Create "Reset Token", confirm, and copy the newly generated token. You will need this in your configuration
+    * Enable "Message Content Intent"
+  * Go to OAuth2 > URL Generator
+    * Add scope "bot"
+      * Add permission: "Read Messages/View Channels", "Add Reactions"
+    * Click on the generated URL and add the application to your server
+* Enable developer mode in your discord client
+  * Right-click on the channel you want to use and click "copy id".
+  * 
 
 ### Using SPI and non-root user
 If your LED strip has 4 wires (2 data wires), then you should control it using SPI.
@@ -49,125 +157,14 @@ If your LED strip has two data wires, connect them accordingly (I'm not sure how
 If your LED strip only has one data wire, connect that data wire to either SPI0 MOSI, or SPI1 MOSI.
 Pinout can be found at https://pinout.xyz/pinout/spi.
 
-Run `sudo raspi-config`. Go to "Interface Options" and enable SPI.
+
+## Additional Notes
 
 Note that SPI is required for non-Raspberry Pi devices (as ws281x library only supports PWM control for Raspberry Pi devices 1, 2, 3 and 4).
 Additionally, (as of 2025-01-05), Raspberry Pi 5s must also use SPI.
-
-### Building yourself
-```shell
-./gradlew shadowJar
-scp app/build/libs/app-all.jar ledpi:/opt/led-machine-plus/program/led-machine-plus.jar
-```
-
-### Using an Orange Pi One
-If you want to use an Orange Pi One, connect ground to ground, and your data wire to
-pin 19 (MOSI.0). When configuring, set `"spi": true`. Note: pin 40 is closest to Ethernet on Orange Pi One.
-You can find pinout [here](https://www.instructables.com/Orange-Pi-One-Python-GPIO-basic/).
-
-You will need to enable SPI on your Orange Pi.
-
-### TODO
-* Choose directijon -- no reversing
-* Use manifest file for slack setup
-
-### Other stuff
-Useful to prefer WiFi for internet:
-```
-interface eth0
-metric 300
-
-interface wlan0
-metric 200
-```
-
-Useful for debugging:
-```shell
-sudo journalctl -u led-machine-main.service -f -n100
-```
-
-Useful for copying jar:
-```shell
-./gradlew app:jar
-rsync app/build/libs/app-0.0.1.jar pi@192.168.1.151:/opt/led-machine-plus/program/led-machine-plus.jar
-```
-
-### Slack App Setup
-* App level token needs to have `connections:write` scope. This token will be pasted into the `app_token` property.
-* Enable Socket Mode
-* Go to "OAuth & Permissions" 
-  * Add `channels:history` (most important), `groups:history`, `im:history`, as Bot Token Scopes
-    * Optionally add these for future use: `channels:write`, `reactions:write`, `reactions:read`, `chat:write`, `channels:read`
-  * Install to your workspace
-  * Get the Bot User OAuth Token that will be pasted into the `bot_token` property.
-* Go to "Event Subscriptions" and Enable Events
-  * Subscribe to bot events: `message.channels`, `message.groups`, `message.im`
-* Add your bot to the channel you want it to have access to
-
-### Discord App Setup
-* Create application at https://discord.com/developers/applications
-  * Go to Bot
-    * Create a bot
-    * Create "Reset Token", confirm, and copy the newly generated token. You will need this in your configuration
-    * Enable "Message Content Intent"
-  * Go to OAuth2 > URL Generator
-    * Add scope "bot"
-      * Add permission: "Read Messages/View Channels", "Add Reactions"
-    * Click on the generated URL and add the application to your server
-* Enable developer mode in your discord client
-  * Right-click on the channel you want to use and click "copy id".
 
 ### Common Errors
 
 * You need to enable SPI if:
   * `open failed: No such file or directorySPI message transfer failed: Bad file descriptorSPI message transfer failed: Bad file descriptor`
 
-### New Language Ideas
-
-3 layers
-* pixel layer - interacts with pixels directly
-* positional layer - interacts with positions
-* gradient layer - a gradient has a certain color when given a position between 0% and 100%
-
-
-Positional layer nodes and examples
-* speed - `speed 5 : <positional node>`
-  * The nested positional node is now moving at 5 units per second
-* length - `length 100 : (blue red)`
-  * The nested gradient is spread and repeated over 100 units
-* round - `round 100 : (blue red)`
-  * Similar to `length` - the nested gradient is spread and repeated over about 100 units. 100 is rounded to the nearest length that fits evenly into the LED strip
-* divide - `divide 5 : (blue red)`
-  * The nested gradient is spread and repeated 5 times over the length of the LED strip
-
-Gradient layer nodes and examples
-* period - `period 10 : (yellow green)`
-  * The nested gradient moves and completes a cycle in 10 seconds
-* mirror - `mirror : period 10 : (yellow green)`
-  * The nested gradient is mirrored so that yellow green now moves toward the center of the gradient
-
-
-
-Keywords
-* Color keywords - each of these keywords defines a gradient that is all that color
-  * `red`
-  * `green`
-  * `blue`
-  * `brown`
-  * `deep purple`
-  * `hot purple`
-  * `purple`
-  * `pink`
-  * `orange`
-  * `tiger`
-  * `yellow`
-  * `teal`
-  * `cyan`
-  * `aqua`
-  * `white`
-  * `dupree`
-* Color literal
-  * `#FFF` - 12 bit color definition
-    * Alternatively, `FFF` is also an example of a 12 bit color definition
-  * `#FFFFFF` - 24 bit color definition
-    * Alternatively, `FFFFFF` is also an example of a 12 bit color definition

@@ -90,6 +90,7 @@ fun main(args: Array<String>) {
                     pixels.setPixelColour(i, color24Bit)
                 }
             }
+            pixels.numPixels
             firstUpdate = false
             pixels.render()
             try {

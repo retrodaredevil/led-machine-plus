@@ -12,6 +12,7 @@ import me.retrodaredevil.led.percent.BouncePercentGetter
 import me.retrodaredevil.led.percent.TimeMultiplierPercentGetter
 import me.retrodaredevil.util.getLogger
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.IOException
 import kotlin.jvm.Throws
 import kotlin.math.*
@@ -143,6 +144,8 @@ class LedProgram(
         var saveFile: SaveFile? = null
         try {
             saveFile = objectMapper.readValue(SAVE_FILE, SaveFile::class.java)
+        } catch (_: FileNotFoundException) {
+            LOGGER.debug("Save file does not exist. Continuing normally.")
         } catch (ex: IOException) {
             LOGGER.debug("Could not read save file", ex)
         }
@@ -225,6 +228,7 @@ class LedProgram(
 
     companion object {
         private val LOGGER = getLogger()
+        @Deprecated("Don't hard code this")
         private val SAVE_FILE = File("saved.json")
     }
 
