@@ -1,7 +1,7 @@
 plugins {
     id("buildlogic.kotlin-common-conventions")
     java
-    id("com.gradleup.shadow") version "8.3.5"
+    id("com.gradleup.shadow") version "9.2.2"
 }
 
 version "0.0.1"
@@ -13,7 +13,7 @@ dependencies {
     implementation("com.diozero:diozero-core:$diozero")
     implementation("com.diozero:diozero-ws281x-java:$diozero")
 
-    val log4jVersion = "2.24.3" // https://logging.apache.org/log4j/2.x/release-notes.html
+    val log4jVersion = "2.25.2" // https://logging.apache.org/log4j/2.x/release-notes.html
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion")
 }
 

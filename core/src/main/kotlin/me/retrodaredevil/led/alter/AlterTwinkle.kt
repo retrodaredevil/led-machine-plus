@@ -15,7 +15,8 @@ private class Twinkle(
         return max(0.0, 1 - distance / fadeDurationSeconds)
     }
     fun isStale(seconds: Double): Boolean {
-        return peakPointSeconds + fadeDurationSeconds < seconds
+        return peakPointSeconds + fadeDurationSeconds < seconds // main isStale() calculation
+                || peakPointSeconds - fadeDurationSeconds - 1.0 > seconds // this is also stale if the clock jumped behind for some reason
     }
 }
 

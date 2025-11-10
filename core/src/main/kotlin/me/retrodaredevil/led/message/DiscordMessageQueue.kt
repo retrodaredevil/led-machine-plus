@@ -3,9 +3,8 @@ package me.retrodaredevil.led.message
 import discord4j.core.DiscordClient
 import discord4j.core.DiscordClientBuilder
 import discord4j.core.event.domain.message.MessageCreateEvent
-import discord4j.core.`object`.reaction.ReactionEmoji
+import discord4j.core.`object`.emoji.Emoji
 import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.reactor.mono
 import me.retrodaredevil.util.getLogger
@@ -44,7 +43,7 @@ class DiscordMessageQueue(
                                 val message = Message(discordMessage.content, discordMessage.timestamp)
                                 queue.add(message)
 
-                                val heartReaction = ReactionEmoji.unicode("\u2764")
+                                val heartReaction = Emoji.unicode("\u2764")
                                 try {
                                     discordMessage.addReaction(heartReaction).awaitSingleOrNull()
                                 } catch (e: Exception) {

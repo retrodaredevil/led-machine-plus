@@ -11,7 +11,7 @@ dependencies {
     }
 
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    implementation("org.slf4j:slf4j-api:2.0.16") // http://www.slf4j.org/download.html
+    implementation("org.slf4j:slf4j-api:2.0.17") // http://www.slf4j.org/download.html
 
     // https://junit.org/junit5/
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
